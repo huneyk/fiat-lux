@@ -1,0 +1,108 @@
+
+def fillna (df, feature) :
+    
+    if feature == 'Age' :
+        df['Age'].fillna(df['Age'].mean(), inplace=True)
+
+    
+    else :
+        df[feature].fillna('N', inplace = True)
+        
+    return df
+
+
+def drop_features (df, features) :
+
+    df.drop(features, axis=1, inplace =True)
+    
+    return df
+
+def cabin_name (df) :
+    
+    df['Cabin'] = df['Cabin'].str[:1]
+    
+    return df
+    
+
+def label_encoding (df, features) :
+    
+    for feature in features :
+    
+        encoder = LabelEncoder()
+        
+        encoder.fit(df[feature])
+    
+        df[feature] = encoder.transform(df[feature])
+    
+    return df
+    
+
+def transform_features (df) :
+
+
+    na_features_df = df.isna().sum()
+    na_features = na_features_df.to_dict()
+
+    for feature, value in na_features.items() :
+        if value > 0 :
+            df = fillna (df, feature)
+
+    delete_features = ['PassengerId','Name', 'Ticket']
+    df = drop_features (df, delete_features)
+
+    df = cabin_name(df)
+
+    encoding_features = ['Sex','Cabin','Embarked']
+
+    df = label_encoding (df, encoding_features)
+
+    return df
+
+
+# main
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+
+titanic_df = pd.read_csv('titanic_train.csv')
+
+
+y_titanic_df = titanic_df['Survived']
+X_titanic_df = titanic_df.drop('Survived', axis=1)
+
+
+X_titanic_df = transform_features (X_titanic_df)
+
+
+# 예측 시작
+
+X_train, X_test, y_train, y_test = train_test_split (X_titanic_df, y_titanic_df, test_size = 0.2, random_state = 11)
+
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+
+dt_clf = DecisionTreeClassifier()
+dt_clf.fit(X_train, y_train)
+clf_pred = dt_clf.predict(X_test)
+clf_accuracy = accuracy_score(y_test, clf_pred)
+
+print ("DecisionTree accuracy : ", clf_accuracy)
+
+rf_clf = RandomForestClassifier()
+rf_clf.fit(X_train, y_train)
+rf_pred = rf_clf.predict (X_test)
+rf_accuracy = accuracy_score(y_test, rf_pred)
+
+print ("RandomForest accuracy :", rf_accuracy)
+
+lr_clf = LogisticRegression()
+lr_clf.fit(X_train, y_train)
+lr_pred = lr_clf.predict(X_test)
+lr_accuracy = accuracy_score(y_test, lr_pred)
+
+print ("Logistic accuracy : ", lr_accuracy)
